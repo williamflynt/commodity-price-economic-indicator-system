@@ -56,7 +56,7 @@ fun main() {
         Netty,
         opts.port,
         watchPaths = listOf("basic-server"),
-        module = { module(database, eventBus, fredClient) }).start(wait = true)
+        module = { module(database, eventBus) }).start(wait = true)
 }
 
 // --- TYPES ---
@@ -68,7 +68,7 @@ data class SseEvent(val type: String?, val id: String?, val payload: String?)
 
 // --- APPLICATION ---
 
-fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter, client: FredApiClient) {
+fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter) {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
     logger.info("setting up SSE SharedFlow...")

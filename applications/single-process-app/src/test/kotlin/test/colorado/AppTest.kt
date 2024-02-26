@@ -1,5 +1,8 @@
 package test.colorado
 
+import edu.colorado.AppDatabase
+import edu.colorado.ZmqRouter
+import edu.colorado.module
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -12,8 +15,11 @@ class AppTest {
 
     @Test
     fun testHtmlAtHome() = testApplication {
+        application {
+            module(AppDatabase("appDbTest"), ZmqRouter(7779))
+        }
         val response = client.get("/")
         assertEquals(HttpStatusCode.OK, response.status)
-        assertTrue(response.bodyAsText().contains("<html>"))
+        assertTrue(response.bodyAsText().contains("<!doctype html>"))
     }
 }
