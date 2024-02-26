@@ -1,6 +1,6 @@
 import React from 'react';
 import {Badge, Box, HStack, Spacer, Text} from "@chakra-ui/react";
-import {SseConnection, SseEvent} from "./Sse.ts";
+import {LoggedEvent, SseConnection} from "./Sse.ts";
 
 export const getColorScheme = (eventType: string | null) => {
     if (eventType === null) {
@@ -30,12 +30,14 @@ export const getColorScheme = (eventType: string | null) => {
     }
 }
 
-const EventRow: React.FC<{ event: SseEvent }> = ({event}) => {
+const EventRow: React.FC<{ event: LoggedEvent }> = ({event}) => {
     return (
         <HStack paddingRight={2}>
             <Badge colorScheme={getColorScheme(event.type)} textAlign={"center"}>{event.type}</Badge>
-            <Spacer gap={2}/>
-            <Text size={'sm'}>{event.id}</Text>
+            <Spacer gap={1}/>
+            <Text as="samp" size={'sm'}>{event.id}</Text>
+            <Spacer gap={1}/>
+            <Text size={'sm'}>@ {event.timestamp}</Text>
         </HStack>
     );
 }
@@ -47,9 +49,11 @@ export const Events: React.FC<SseConnection> = ({sseStatus, events, error}) => {
             <Box marginLeft={2}>
                 {error && <span>Uh oh. {error}</span>}
                 {!events.length && <span>No events yet.</span>}
-                {events.reverse().map((event, index) => (
-                    <EventRow event={event} key={index}/>
-                ))}
+                {events
+                    .sort((a, b) => (a.timestamp || Date.now()) > (b.timestamp || Date.now()) ? 1 : -1)
+                    .map((event, index) => (
+                        <EventRow event={event} key={index}/>
+                    ))}
             </Box>
         </Box>
     );

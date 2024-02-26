@@ -5,8 +5,11 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 
 @Serializable
 data class FredResponse(
@@ -47,9 +50,15 @@ data class Observation(
  * https://fred.stlouisfed.org/docs/api/fred/series_observations.html
  */
 class FredApiClient(private val apiKey: String) {
+    private val logger = LoggerFactory.getLogger(this.javaClass)
+
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json()
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+                ignoreUnknownKeys = true
+            })
         }
     }
     private val baseUrl = "https://api.stlouisfed.org/fred/series/observations"
@@ -59,12 +68,17 @@ class FredApiClient(private val apiKey: String) {
         observationStart: String,
         observationEnd: String
     ): FredResponse {
-        return client.get(baseUrl) {
+        val response = client.get(baseUrl) {
             parameter("series_id", seriesId)
             parameter("observation_start", observationStart)
             parameter("observation_end", observationEnd)
             parameter("api_key", apiKey)
             parameter("file_type", "json")
-        }.body()
+        }
+        if (response.status != HttpStatusCode.OK || response.bodyAsText().contains("error_code")) {
+            logger.warn("got FRED response with status ${response.status}")
+            logger.warn(response.bodyAsText())
+        }
+        return response.body()
     }
 }

@@ -12,14 +12,16 @@ const readyState = (readyState: number) => {
 
 
 export type SseConnection = {
-    events: SseEvent[];
+    events: LoggedEvent[];
     error: null | string;
     sseStatus: null | string;
     eventSource: null | EventSource;
 }
 
+export type LoggedEvent = SseEvent & { timestamp: number };
+
 export const useSseConnection = (onMessage?: (data: SseEvent) => void): SseConnection => {
-    const [events, setEvents] = useState<SseEvent[]>([]);
+    const [events, setEvents] = useState<LoggedEvent[]>([]);
     const [error, setError] = useState<null | string>(null);
     const [sseStatus, setSseStatus] = useState<null | string>(null);
     const [eventSource, setEventSource] = useState<null | EventSource>(null);
@@ -37,7 +39,7 @@ export const useSseConnection = (onMessage?: (data: SseEvent) => void): SseConne
             setError(null);
             const data: SseEvent = JSON.parse(event.data);
             if (data.type != 'HEARTBEAT') {
-                setEvents((prevEvents: SseEvent[]) => [...prevEvents, data]);
+                setEvents((prevEvents: LoggedEvent[]) => [...prevEvents, {...data, timestamp: Math.floor(Date.now() / 1000)}]);
             }
             if (onMessage) {
                 onMessage(data);

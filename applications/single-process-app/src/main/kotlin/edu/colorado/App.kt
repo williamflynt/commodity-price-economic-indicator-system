@@ -49,6 +49,7 @@ fun main() {
     val database = initializeDatabase()
     val eventBus = ZmqRouter(opts.zmqPort)
     val fredClient = FredApiClient(System.getenv("FRED_API_KEY"))
+    logger.info("got FRED with ${System.getenv("FRED_API_KEY")[0]} and ${System.getenv("FRED_API_KEY")[31]}")
 
     logger.info("listening on ZeroMQ...")
     eventBus.startListening()
