@@ -1,0 +1,10 @@
+rootProject.name = "commodity-price-economic-indicator-system"
+
+include "applications:single-process-app"
+
+include "components:data-collector"
+include "components:data-analyzer"
+include "components:workflow-support"
+include "components:database"
+include "components:fred-client"
+include "components:zmq-router"

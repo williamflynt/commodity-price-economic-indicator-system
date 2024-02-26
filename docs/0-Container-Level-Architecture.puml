@@ -1,0 +1,45 @@
+@startuml
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Component>
+
+title Commodity Price Economic Indicator System (CPEIS)
+skinparam linetype ortho
+skinparam ranksep 200
+skinparam nodesep 100
+
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+System_Boundary(cpeisSystem, "Commodity Price Economic Indicator System") {
+    System_Boundary(webUIsys, "Web UI System") {
+        Component(webUIFrontend, "Web UI Frontend", "HTML/CSS/JavaScript", "Allows users to interact with the system, submit data requests, and view analysis.")
+        Component(webUIBackend, "Web UI Backend", "Kotlin/GraalVM", "Handles API requests, serves web pages, and communicates with other system components.")
+    }
+    ContainerDb(database, "Database", "Relational DBMS", "Stores commodity price data, economics data, and analysis results.")
+    Container(dataCollection, "Data Collection", "Kotlin/GraalVM", "Collects data from external APIs and stores it in the database.")
+    Container(dataAnalysis, "Data Analysis", "Kotlin/GraalVM/SQL", "Analyzes data on demand and stores results in the database.")
+    ContainerQueue(msgBus, "Message Bus", "RabbitMQ", "Facilitates asynchronous communication between components.")
+}
+
+Person(user, "User", "A user of the web application.")
+Rel(user, webUIFrontend, "Uses", "HTTP")
+Rel(webUIFrontend, webUIBackend, "Submits requests", "HTTP/AJAX")
+Rel(webUIBackend, msgBus, "Publishes async requests to other services", "AMQP")
+
+Rel(webUIBackend, database, "Reads/Writes data", "JDBC")
+Rel(dataCollection, database, "Stores data", "JDBC")
+Rel(dataCollection, msgBus, "Sends notifications", "AMQP")
+Rel(dataCollection, msgBus, "Listens for requests", "AMQP")
+Rel(dataAnalysis, database, "Stores analysis results", "JDBC")
+Rel(dataAnalysis, msgBus, "Listens for requests", "AMPQ")
+
+
+System_Ext(boatsApi, "Boats API", "Placeholder system for various boat information APIs.")
+System_Ext(econApi, "Economic Data API", "Private and government APIs to retrieve economic data")
+
+Rel(dataCollection, boatsApi, "uses", "HTTP")
+Rel(dataCollection, econApi, "uses", "HTTP")
+
+@enduml

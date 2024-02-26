@@ -1,0 +1,35 @@
+name: Deploy to Google Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to deploy'
+        required: false
+      region:
+        description: 'Cloud Run region to deploy into'
+        required: false
+        default: 'us-west1'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Deploy to Cloud Run
+        run: |
+          TAG=${{ github.event.inputs.tag }}
+          REGION=${{ github.event.inputs.region }}
+          IMAGE_NAME=${{ secrets.GCR_HOSTNAME }}/${{ secrets.GCP_PROJECT_ID }}/commodity-price-economic-indicator-system:$TAG
+          gcloud run deploy commodity-price-economic-indicator-system \
+            --image $IMAGE_NAME \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "FRED_API_KEY=${{ secrets.FRED_API_KEY }}"

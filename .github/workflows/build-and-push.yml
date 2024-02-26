@@ -1,0 +1,65 @@
+name: Build and Push Docker Image to GCR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get the short SHA
+        id: short-sha
+        run: echo "::set-output name=sha7::$(echo $GITHUB_SHA | cut -c1-7)"
+
+      - name: Set up JDK 18
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 18
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker to use the gcloud command-line tool as a credential helper
+        run: gcloud auth configure-docker
+
+      - name: Build Docker image
+        # Multiple tags on the image for rollback/roll forward capability later.
+        run: |
+          IMAGE_NAME=${{ secrets.GCR_HOSTNAME }}/${{ secrets.GCP_PROJECT_ID }}/commodity-price-economic-indicator-system
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ steps.short-sha.outputs.sha7 }} .
+
+      - name: Push Docker images to Google Container Registry
+        run: |
+          docker push ${{ secrets.GCR_HOSTNAME }}/${{ secrets.GCP_PROJECT_ID }}/commodity-price-economic-indicator-system --all-tags
+
+      - name: Trigger Deploy Workflow
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          script: |
+            const payload = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: {
+                tag: '${{ steps.short-sha.outputs.sha7 }}',
+                region: 'us-west1',
+              }
+            };
+            await github.rest.actions.createWorkflowDispatch(payload);

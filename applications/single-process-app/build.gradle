@@ -1,0 +1,36 @@
+plugins {
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
+}
+
+version '1.0-SNAPSHOT'
+
+apply plugin: 'application'
+
+mainClassName = "edu.colorado.AppKt"
+
+dependencies {
+    implementation project(":components:data-analyzer")
+    implementation project(":components:data-collector")
+    implementation project(":components:workflow-support")
+    implementation project(":components:database")
+    implementation project(":components:zmq-router")
+    implementation "io.ktor:ktor-freemarker:$ktor_version"
+    implementation "io.ktor:ktor-jackson:$ktor_version"
+    implementation project(path: ':components:fred-client')
+
+}
+
+tasks.withType(Copy).all {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes "Main-Class": "edu.colorado.AppKt"
+    }
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

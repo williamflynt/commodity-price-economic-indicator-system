@@ -1,0 +1,61 @@
+@startuml
+
+participant WebUi
+participant HttpServer
+participant Cache
+participant EventBus
+participant Collector
+participant Analyzer
+participant Database
+participant BoatApi
+participant EconApi
+
+WebUi -> HttpServer ++ : GET /analysis?start=2023-01-01&end=2024-01-01
+HttpServer -> Cache ++ : get { start::end }
+Cache -> HttpServer -- : <NULL>
+HttpServer -> Database ++ : getAnalysis(start, end)
+Database -> HttpServer -- : <NULL>
+HttpServer --> EventBus : Event { ANALYZE { <id>, start, end} }
+HttpServer -> WebUi -- : 202 ACCEPTED <id>
+
+EventBus --> Analyzer ++ : Event { ANALYZE { <id>, start, end} }
+Analyzer -> Database ++ : getDataForAnalysis(start, end)
+Database -> Analyzer -- : <MISSING DATA>
+Analyzer --> EventBus -- : Event { COLLECT { <id>, start, end } }
+
+EventBus --> Collector ++ : Event { COLLECT { <id>, start, end } }
+Collector -> Database : getCollectedData(start, end)
+Database -> Collector : <MISSING DATA>
+Collector -> BoatApi ++ : getBoatData(start, end)
+BoatApi -> Collector -- : BoatData { ... }
+Collector -> Database ++ : saveBoatData(data)
+Database -> Collector -- : OK
+Collector -> EconApi ++ : getEconData(start, end)
+EconApi -> Collector -- : BoatData { ... }
+Collector -> Database ++ : saveEconData(data)
+Database -> Collector -- : OK
+Collector --> EventBus -- : COLLECT-DONE { <id>, start, end }
+
+EventBus --> Analyzer ++ : COLLECT-DONE { <id>, start, end }
+Analyzer -> Database ++ : getDataForAnalysis(start, end)
+Database -> Analyzer -- : <DATA>
+Analyzer -> Analyzer : Perform analysis
+Analyzer -> Database ++ : saveAnalysisResult(result)
+Database -> Analyzer -- : OK
+Analyzer --> EventBus -- : ANALYZE-DONE { <id>, start,  end }
+
+EventBus --> HttpServer ++ : ANALYZE-DONE { <id>, start,  end }
+HttpServer -> Database ++ : getAnalysis(id)
+Database -> HttpServer -- : <DATA>
+HttpServer -> Cache ++ : set { id, data }
+Cache -> HttpServer -- : OK
+HttpServer -> Cache ++ : set { start::end, id }
+Cache -> HttpServer -- : OK
+HttpServer --> WebUi -- : (via SSE) ANALYZE-DONE { <id>, start,  end }
+
+WebUi -> HttpServer ++ : GET /analysis/{id}
+HttpServer -> Cache ++ : get { id }
+Cache -> HttpServer -- : <DATA>
+HttpServer -> WebUi -- : 200 OK { data }
+
+@enduml
