@@ -20,18 +20,18 @@ System_Boundary(cpeisSystem, "Commodity Price Economic Indicator System") {
     ContainerDb(database, "Database", "Relational DBMS", "Stores commodity price data, economics data, and analysis results.")
     Container(dataCollection, "Data Collection", "Kotlin/GraalVM", "Collects data from external APIs and stores it in the database.")
     Container(dataAnalysis, "Data Analysis", "Kotlin/GraalVM/SQL", "Analyzes data on demand and stores results in the database.")
-    ContainerQueue(msgBus, "Message Bus", "RabbitMQ", "Facilitates asynchronous communication between components.")
+    ContainerQueue(msgBus, "Message Bus", "ZeroMQ", "Facilitates asynchronous communication between components.")
 }
 
 Person(user, "User", "A user of the web application.")
 Rel(user, webUIFrontend, "Uses", "HTTP")
 Rel(webUIFrontend, webUIBackend, "Submits requests", "HTTP/AJAX")
-Rel(webUIBackend, msgBus, "Publishes async requests to other services", "AMQP")
+Rel(webUIBackend, msgBus, "Publishes async requests to other services", "ZMTP[TCP]")
 
 Rel(webUIBackend, database, "Reads/Writes data", "JDBC")
 Rel(dataCollection, database, "Stores data", "JDBC")
-Rel(dataCollection, msgBus, "Sends notifications", "AMQP")
-Rel(dataCollection, msgBus, "Listens for requests", "AMQP")
+Rel(dataCollection, msgBus, "Sends notifications", "ZMTP[TCP]")
+Rel(dataCollection, msgBus, "Listens for requests", "ZMTP[TCP]")
 Rel(dataAnalysis, database, "Stores analysis results", "JDBC")
 Rel(dataAnalysis, msgBus, "Listens for requests", "AMPQ")
 

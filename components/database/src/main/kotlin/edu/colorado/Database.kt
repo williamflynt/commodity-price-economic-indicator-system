@@ -31,9 +31,16 @@ object AnalysisResults : Table() {
     override val primaryKey = PrimaryKey(id)
 }
 
-private class AppDatabaseCore(dbName: String) {
+/**
+ * The inMem is useful for tests.
+ */
+private class AppDatabaseCore(dbName: String, inMem: Boolean?) {
     init {
-        Database.connect("jdbc:h2:./$dbName.h2.db:$dbName;DB_CLOSE_DELAY=-1;", driver = "org.h2.Driver")
+        var url = "jdbc:h2:./$dbName.h2.db:$dbName;DB_CLOSE_DELAY=-1;"
+        if (inMem == true) {
+            url = "jdbc:h2:mem:$dbName;DB_CLOSE_DELAY=-1;"
+        }
+        Database.connect(url, driver = "org.h2.Driver")
         transaction {
             SchemaUtils.create(CollectedObservations, AnalysisResults)
         }
@@ -147,11 +154,11 @@ private class AppDatabaseCore(dbName: String) {
     }
 }
 
-class AppDatabase(dbName: String) {
+class AppDatabase(dbName: String, inMem: Boolean?) {
     private val db: AppDatabaseCore
 
     init {
-        db = AppDatabaseCore(dbName)
+        db = AppDatabaseCore(dbName, inMem)
     }
 
     fun getAnalysisResults(): List<AnalysisResult> {

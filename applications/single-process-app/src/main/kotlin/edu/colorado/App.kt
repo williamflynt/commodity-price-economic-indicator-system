@@ -180,7 +180,7 @@ fun buildSharedSseFlow(zmqChan: Channel<Message>): Flow<SseEvent> {
 }
 
 fun initializeDatabase(): AppDatabase {
-    return AppDatabase("appDb")
+    return AppDatabase("appDb", false)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
