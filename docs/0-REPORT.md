@@ -14,6 +14,7 @@ A discussion on the system I implemented to meet the A-Level Requirements!
     * [Building the App + Web UI](#building-the-app--web-ui)
     * [Handlers](#handlers)
 6. [System Requirements and Testability](#system-requirements-and-testability)
+7. [Next Steps and Improvements](#next-steps-and-improvements)
 
 ---
 
@@ -129,3 +130,11 @@ From a software implementation perspective, I tried to keep most functions small
 Writing unit tests is much simpler WITHOUT having mocks and doubles - I consider that a sign of refactor-ready code.
 
 The highly structured data from FRED also helped with testability - simple JSON blobs could be used as fixtures.
+
+## Next Steps and Improvements
+
+This isn't a production service... Here are the top three things I would improve:
+
+1. Refactor and move event bus logic, including message format/protocol
+2. Improve testing - it's not very robust due to time constraints
+3. Incorporate authentication and authorization
