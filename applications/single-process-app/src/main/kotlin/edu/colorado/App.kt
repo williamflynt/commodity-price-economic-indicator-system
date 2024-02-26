@@ -1,21 +1,20 @@
 package edu.colorado
 
-import freemarker.cache.ClassTemplateLoader
+import edu.colorado.FredApiClient
 import io.collective.start.analyzer.AnalyzeTask
 import io.collective.start.analyzer.AnalyzeWorker
 import io.collective.start.collector.CollectorTask
 import io.collective.start.collector.CollectorWorker
 import io.collective.workflow.ContinuousWorkSupervisor
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.freemarker.*
 import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
-import io.ktor.util.pipeline.*
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.defaultheaders.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -27,21 +26,34 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.util.*
 
-// TODO: Build -> vite -> resources
 // TODO: Serve the UI from base /
 // TODO: Host this thing somewhere (set up github, secrets, push it)
 
 fun main() {
+    val logger = LoggerFactory.getLogger("main")
+
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
     val opts = SingleAppConfig(
         System.getenv("PORT")?.toInt() ?: 8888,
         System.getenv("ZMQPORT")?.toInt() ?: 8889,
     )
+
     val database = initializeDatabase()
     val eventBus = ZmqRouter(opts.zmqPort)
     val fredClient = FredApiClient(System.getenv("FRED_API_KEY"))
+
+    logger.info("listening on ZeroMQ...")
+    eventBus.startListening()
+
+    logger.info("starting data collector...")
+    setupCollection(database, eventBus, fredClient)
+
+    logger.info("starting data analyzer...")
+    setupAnalysis(database, eventBus)
 
     embeddedServer(
         Netty,
@@ -62,9 +74,6 @@ data class SseEvent(val type: String?, val id: String?, val payload: String?)
 fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter, client: FredApiClient) {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
-    logger.info("listening on ZeroMQ...")
-    zmqRouter.startListening()
-
     logger.info("setting up SSE SharedFlow...")
     val sseFlow = buildSharedSseFlow(zmqRouter.fullStream).shareIn(GlobalScope, SharingStarted.Eagerly)
 
@@ -73,27 +82,26 @@ fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter, client: FredApiCli
 
     logger.info("installing routes...")
     setupRoutes(sseFlow, zmqRouter, db)
-
-    logger.info("starting data collector...")
-    setupCollection(db, zmqRouter, client)
-
-    logger.info("starting data analyzer...")
-    setupAnalysis(db, zmqRouter)
 }
 
 fun Application.setupMiddleware() {
     install(DefaultHeaders)
     install(CallLogging)
-    install(FreeMarker) {
-        templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
-    }
 }
 
 fun Application.setupRoutes(sseFlow: SharedFlow<SseEvent>, zmq: ZmqRouter, db: AppDatabase) {
     install(Routing) {
-        get("/") { handleRoot(call, headers()) }
+        get("/") {
+            val file = File("web/index.html")
+            if (file.exists()) {
+                call.respondFile(file)
+            } else {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
         static("images") { resources("images") }
         static("style") { resources("style") }
+        static("web") { resources("web") }
         get("/analysis") { handleListAnalysis(call, db) }
         get("/analysis/{id}") { handleAnalysisById(call, db) }
         get("/analysis/{category}/{startDate}/{endDate}") { handleRequestAnalysis(call, zmq, db) }
@@ -118,14 +126,6 @@ suspend fun ApplicationCall.respondSse(eventFlow: Flow<SseEvent>) {
     } catch (e: CancellationException) {
         println("SSE connection was closed by the client.")
     }
-}
-
-internal fun PipelineContext<Unit, ApplicationCall>.headers(): MutableMap<String, String> {
-    val headers = mutableMapOf<String, String>()
-    call.request.headers.entries().forEach { entry ->
-        headers[entry.key] = entry.value.joinToString()
-    }
-    return headers
 }
 
 // --- HELPERS ---

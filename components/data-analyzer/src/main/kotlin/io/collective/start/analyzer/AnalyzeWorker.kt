@@ -5,7 +5,6 @@ import edu.colorado.AppDatabase
 import edu.colorado.CollectedObservation
 import edu.colorado.ZmqRouter
 import io.collective.workflow.Worker
-import io.ktor.html.*
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.math3.stat.descriptive.rank.Median
 import org.apache.commons.math3.stat.regression.SimpleRegression

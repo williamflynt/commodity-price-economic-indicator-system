@@ -31,10 +31,7 @@ dependencies {
     implementation project(":components:workflow-support")
     implementation project(":components:database")
     implementation project(":components:zmq-router")
-    implementation "io.ktor:ktor-freemarker:$ktor_version"
-    implementation "io.ktor:ktor-jackson:$ktor_version"
-    implementation project(path: ':components:fred-client')
-
+    implementation project(":components:fred-client")
 }
 
 tasks.withType(Copy).all {
@@ -64,7 +61,7 @@ task npmBuild(type: NpmTask) {
 
 task copyWeb(type: Copy) {
     dependsOn npmBuild
-    from "${project.projectDir}/web/dist"
+    from "${project.projectDir}/../../web/dist"
     into "${project.projectDir}/src/main/resources/web"
 }
 

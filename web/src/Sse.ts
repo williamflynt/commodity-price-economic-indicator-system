@@ -19,7 +19,7 @@ export type SseConnection = {
 }
 
 export const useSseConnection = (onMessage?: (data: SseEvent) => void): SseConnection => {
-    const [events, setEvents] = useState([]);
+    const [events, setEvents] = useState<SseEvent[]>([]);
     const [error, setError] = useState<null | string>(null);
     const [sseStatus, setSseStatus] = useState<null | string>(null);
     const [eventSource, setEventSource] = useState<null | EventSource>(null);
@@ -37,7 +37,7 @@ export const useSseConnection = (onMessage?: (data: SseEvent) => void): SseConne
             setError(null);
             const data: SseEvent = JSON.parse(event.data);
             if (data.type != 'HEARTBEAT') {
-                setEvents((prevEvents) => [...prevEvents, data]);
+                setEvents((prevEvents: SseEvent[]) => [...prevEvents, data]);
             }
             if (onMessage) {
                 onMessage(data);

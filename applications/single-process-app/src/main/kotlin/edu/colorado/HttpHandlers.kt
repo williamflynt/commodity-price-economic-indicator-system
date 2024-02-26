@@ -1,9 +1,8 @@
 package edu.colorado
 
-import io.ktor.application.*
-import io.ktor.freemarker.*
 import io.ktor.http.*
-import io.ktor.response.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -20,10 +19,6 @@ object Cache {
 }
 
 // --- HANDLERS ---
-
-suspend fun handleRoot(call: ApplicationCall, headers: Map<String, String>) {
-    call.respond(FreeMarkerContent("index.ftl", mapOf("headers" to headers)))
-}
 
 suspend fun handleListAnalysis(call: ApplicationCall, db: AppDatabase) {
     val results = db.getAnalysisResults()

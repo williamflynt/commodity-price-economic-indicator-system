@@ -3,7 +3,7 @@ import './App.css'
 import {Layout} from "./Layout.tsx";
 import {Events} from "./Events.tsx";
 import {AnalysisPane} from "./AnalysisPane.tsx";
-import {useSseConnection} from "./Sse.ts";
+import {SseEvent, useSseConnection} from "./Sse.ts";
 import {AnalysisList} from "./AnalysisList.tsx";
 import {AnalysisData, backendClient, useAnalysisPreviews} from "./Backend.ts";
 
@@ -15,7 +15,7 @@ import {AnalysisData, backendClient, useAnalysisPreviews} from "./Backend.ts";
 export const App = () => {
     const [analysisData, setAnalysisData] = React.useState<AnalysisData | null>(null)
     // When any new analysis comes in, fetch and retrieve it. This is dumb - we should wait for a specific one.
-    const onAnalysisDone = React.useCallback(async (eventData) => {
+    const onAnalysisDone = React.useCallback(async (eventData: SseEvent) => {
         if (eventData.type === "ANALYZE-DONE" && eventData.id !== null) {
             setAnalysisData(await backendClient.getAnalysisDataById(eventData.id))
         }

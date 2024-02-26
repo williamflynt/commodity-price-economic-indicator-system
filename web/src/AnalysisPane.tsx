@@ -27,7 +27,7 @@ const AnalysisRequestForm: React.FC = () => {
         // TODO: Update required fields, validation, send a nice notice if we are missing something, ...
         if (startDate && endDate && category) {
             try {
-                const response = await backendClient.requestAnalysis(startDate, endDate, category);
+                await backendClient.requestAnalysis(startDate, endDate, category);
                 toast({
                     title: "Analysis requested",
                     status: "success",
@@ -101,7 +101,7 @@ const AnalysisDisplay: React.FC<{ data: AnalysisData | null }> = ({data}) => {
         <Box>
             <h3>Analysis ID: <Text as={'samp'}>{data.id}</Text></h3>
             <HStack padding={4}>
-                <AnalysisChart data={data}/>
+                <AnalysisChart data={data.payload}/>
                 <pre>{JSON.stringify(data, null, 2)}</pre>
             </HStack>
         </Box>

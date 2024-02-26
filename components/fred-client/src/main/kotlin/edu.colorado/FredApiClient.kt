@@ -1,9 +1,11 @@
 package edu.colorado
 
 import io.ktor.client.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
+import io.ktor.client.call.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -46,10 +48,8 @@ data class Observation(
  */
 class FredApiClient(private val apiKey: String) {
     private val client = HttpClient {
-        install(JsonFeature) {
-            serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
-                ignoreUnknownKeys = true
-            })
+        install(ContentNegotiation) {
+            json()
         }
     }
     private val baseUrl = "https://api.stlouisfed.org/fred/series/observations"
@@ -65,6 +65,6 @@ class FredApiClient(private val apiKey: String) {
             parameter("observation_end", observationEnd)
             parameter("api_key", apiKey)
             parameter("file_type", "json")
-        }
+        }.body()
     }
 }

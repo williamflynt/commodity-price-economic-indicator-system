@@ -1,7 +1,7 @@
 buildscript {
-    ext.kotlin_version = '1.6.21'
-    ext.ktor_version = '1.6.8'
-    ext.mockk_version = '1.10.6'
+    ext.kotlin_version = '1.9.22'
+    ext.ktor_version = '2.3.8'
+    ext.mockk_version = '1.13.9'
 
     repositories {
         mavenCentral()
@@ -12,7 +12,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.6.21" apply false
+    id "org.jetbrains.kotlin.jvm" version "1.9.22" apply false
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
 }
 
@@ -36,7 +36,8 @@ subprojects {
         implementation 'com.h2database:h2:2.2.222'
         implementation "io.ktor:ktor-server-core:$ktor_version"
         implementation "io.ktor:ktor-server-netty:$ktor_version"
-        implementation "io.ktor:ktor-html-builder:$ktor_version"
+        implementation "io.ktor:ktor-server-default-headers:$ktor_version"
+        implementation "io.ktor:ktor-server-call-logging:$ktor_version"
 
         implementation "ch.qos.logback:logback-classic:1.2.3"
 
