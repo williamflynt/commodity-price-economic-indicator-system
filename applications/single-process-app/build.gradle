@@ -55,8 +55,13 @@ jar {
     }
 }
 
+task npmInstallVitest(type: NpmTask) {
+    dependsOn npmInstall
+    args = ['install', '-g', 'vitest']
+}
 
 task npmTest(type: NpmTask) {
+    dependsOn npmInstallVitest
     args = ['run', 'test']
 }
 
