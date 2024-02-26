@@ -24,7 +24,6 @@ const AnalysisRequestForm: React.FC = () => {
     const today = new Date().toISOString().split('T')[0]; // Format today's date as YYYY-MM-DD.
 
     const handleSubmit = async () => {
-        // TODO: Update required fields, validation, send a nice notice if we are missing something, ...
         if (startDate && endDate && category) {
             try {
                 await backendClient.requestAnalysis(startDate, endDate, category);
