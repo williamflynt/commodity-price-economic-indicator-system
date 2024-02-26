@@ -12,7 +12,7 @@ import {
     useToast,
     VStack
 } from "@chakra-ui/react";
-import {AnalysisData, backendClient} from "./Backend.ts";
+import {AnalysisPayload, backendClient} from "./Backend.ts";
 import {AnalysisChart} from "./AnalysisChart.tsx";
 
 const AnalysisRequestForm: React.FC = () => {
@@ -92,23 +92,23 @@ const AnalysisRequestForm: React.FC = () => {
     );
 };
 
-const AnalysisDisplay: React.FC<{ data: AnalysisData | null }> = ({data}) => {
+const AnalysisDisplay: React.FC<{ data: AnalysisPayload | null }> = ({data}) => {
     if (!data) {
         return <Box>Waiting for analysis data...</Box>
     }
 
     return (
         <Box>
-            <h3>Analysis ID: <Text as={'samp'}>{data.id}</Text></h3>
+            <h3>Analysis ID: <Text as="samp">{data.id}</Text></h3>
             <HStack padding={4}>
-                <AnalysisChart data={data.payload}/>
+                <AnalysisChart data={data}/>
                 <pre>{JSON.stringify(data, null, 2)}</pre>
             </HStack>
         </Box>
     )
 }
 
-export const AnalysisPane: React.FC<{ data: AnalysisData | null }> = ({data}) => {
+export const AnalysisPane: React.FC<{ data: AnalysisPayload | null }> = ({data}) => {
     return (
         <>
             <p>ANALYSIS</p>

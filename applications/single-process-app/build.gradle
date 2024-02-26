@@ -19,6 +19,10 @@ node {
     nodeProjectDir = file("${project.projectDir}/../../web")
 }
 
+test {
+    workingDir = projectDir
+}
+
 version '1.0-SNAPSHOT'
 
 apply plugin: 'application'
@@ -26,6 +30,8 @@ apply plugin: 'application'
 mainClassName = "edu.colorado.AppKt"
 
 dependencies {
+    testImplementation "io.ktor:ktor-server-test-host:$ktor_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     implementation project(":components:data-analyzer")
     implementation project(":components:data-collector")
     implementation project(":components:workflow-support")
@@ -65,4 +71,5 @@ task copyWeb(type: Copy) {
     into "${project.projectDir}/src/main/resources/web"
 }
 
+processResources { dependsOn copyWeb }
 build { dependsOn copyWeb } // Critical for auto-build w/ Vite.

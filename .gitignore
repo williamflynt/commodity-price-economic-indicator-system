@@ -11,3 +11,5 @@ out
 .idea/
 Procfile
 *.db
+*.h2/
+**/resources/web/*

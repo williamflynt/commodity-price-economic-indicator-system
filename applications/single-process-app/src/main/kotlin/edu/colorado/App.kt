@@ -1,6 +1,5 @@
 package edu.colorado
 
-import edu.colorado.FredApiClient
 import io.collective.start.analyzer.AnalyzeTask
 import io.collective.start.analyzer.AnalyzeWorker
 import io.collective.start.collector.CollectorTask
@@ -26,10 +25,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.util.*
 
-// TODO: Serve the UI from base /
 // TODO: Host this thing somewhere (set up github, secrets, push it)
 
 fun main() {
@@ -59,7 +56,7 @@ fun main() {
         Netty,
         opts.port,
         watchPaths = listOf("basic-server"),
-        module = { module(database, eventBus, fredClient) }).start()
+        module = { module(database, eventBus, fredClient) }).start(wait = true)
 }
 
 // --- TYPES ---
@@ -91,17 +88,14 @@ fun Application.setupMiddleware() {
 
 fun Application.setupRoutes(sseFlow: SharedFlow<SseEvent>, zmq: ZmqRouter, db: AppDatabase) {
     install(Routing) {
-        get("/") {
-            val file = File("web/index.html")
-            if (file.exists()) {
-                call.respondFile(file)
-            } else {
-                call.respond(HttpStatusCode.NotFound)
-            }
+        singlePageApplication {
+            useResources = true
+            filesPath = "web"
+            defaultPage = "index.html"
         }
-        static("images") { resources("images") }
-        static("style") { resources("style") }
-        static("web") { resources("web") }
+        staticResources("/web", "web")
+        staticResources("/images", "images")
+        staticResources("/style", "style")
         get("/analysis") { handleListAnalysis(call, db) }
         get("/analysis/{id}") { handleAnalysisById(call, db) }
         get("/analysis/{category}/{startDate}/{endDate}") { handleRequestAnalysis(call, zmq, db) }

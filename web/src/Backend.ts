@@ -46,7 +46,7 @@ class ApiClient {
         return response.data;
     }
 
-    getAnalysisDataById = async (id: string): Promise<AnalysisData> => {
+    getAnalysisDataById = async (id: string): Promise<AnalysisPayload> => {
         const response = await this.axiosInstance.get(`/analysis/${id}`);
         return response.data;
     }

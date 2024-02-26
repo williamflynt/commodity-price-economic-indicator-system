@@ -1,6 +1,6 @@
 import React, {useCallback} from "react";
 import {Box, HStack, Link, Spacer, StackItem, Text, VStack} from "@chakra-ui/react";
-import {AnalysisData, AnalysisPreview, backendClient} from "./Backend.ts";
+import {AnalysisPayload, AnalysisPreview, backendClient} from "./Backend.ts";
 
 const AnalysisPreviewItem: React.FC<{ item: AnalysisPreview, onClick: () => void }> = ({item, onClick}) => {
     return (
@@ -16,7 +16,7 @@ const AnalysisPreviewItem: React.FC<{ item: AnalysisPreview, onClick: () => void
 
 export const AnalysisList: React.FC<{
     items: AnalysisPreview[] | null,
-    setFunc: (data: AnalysisData | null) => void
+    setFunc: (data: AnalysisPayload | null) => void
 }> = ({items, setFunc}) => {
     if (items === null || !items.length) {
         return (
