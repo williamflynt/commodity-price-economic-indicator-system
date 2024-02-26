@@ -32,6 +32,6 @@ jobs:
             --region $REGION \
             --platform managed \
             --allow-unauthenticated \
-            --port 8888
-            --set-env-vars "FRED_API_KEY=${{ secrets.FRED_API_KEY }}"
+            --port 8888 \
+            --set-env-vars "FRED_API_KEY=${{ secrets.FRED_API_KEY }}" \
             --set-env-vars "PORT=8888"

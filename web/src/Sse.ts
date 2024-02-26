@@ -25,7 +25,7 @@ export const useSseConnection = (onMessage?: (data: SseEvent) => void): SseConne
     const [eventSource, setEventSource] = useState<null | EventSource>(null);
 
     const connectToServer = useCallback(() => {
-        const eventSource = new EventSource('http://localhost:8888/sse');
+        const eventSource = new EventSource('/sse');
         setSseStatus(readyState(eventSource.readyState));
 
         eventSource.onopen = () => {

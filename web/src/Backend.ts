@@ -2,7 +2,7 @@ import axios, {AxiosInstance} from 'axios';
 import {useEffect, useState} from "react";
 
 
-const BASE_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8888') as string;
+const BASE_API_URL = (import.meta.env.VITE_API_URL || '/') as string;
 
 export type AnalysisPayload = {
     id: string;

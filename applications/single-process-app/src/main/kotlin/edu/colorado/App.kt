@@ -9,12 +9,19 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
+import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.*
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -25,9 +32,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.time.Duration
 import java.util.*
 
-// TODO: Host this thing somewhere (set up github, secrets, push it)
 
 fun main() {
     val logger = LoggerFactory.getLogger("main")
@@ -71,6 +78,10 @@ data class SseEvent(val type: String?, val id: String?, val payload: String?)
 fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter) {
     val logger = LoggerFactory.getLogger(this.javaClass)
 
+    logger.info("installing production monitoring/instrumenting endpoint...")
+    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+    setupMonitoring(appMicrometerRegistry)
+
     logger.info("setting up SSE SharedFlow...")
     val sseFlow = buildSharedSseFlow(zmqRouter.fullStream).shareIn(GlobalScope, SharingStarted.Eagerly)
 
@@ -78,7 +89,26 @@ fun Application.module(db: AppDatabase, zmqRouter: ZmqRouter) {
     setupMiddleware()
 
     logger.info("installing routes...")
-    setupRoutes(sseFlow, zmqRouter, db)
+    setupRoutes(sseFlow, zmqRouter, db, appMicrometerRegistry)
+}
+
+fun Application.setupMonitoring(appMicrometerRegistry: PrometheusMeterRegistry) {
+    install(MicrometerMetrics) {
+        registry = appMicrometerRegistry
+        distributionStatisticConfig = DistributionStatisticConfig.Builder()
+            .percentilesHistogram(true)
+            .maximumExpectedValue(Duration.ofSeconds(20).toNanos().toDouble())
+            .serviceLevelObjectives(
+                Duration.ofMillis(100).toNanos().toDouble(),
+                Duration.ofMillis(500).toNanos().toDouble()
+            )
+            .build()
+        meterBinders = listOf(
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics()
+        )
+    }
 }
 
 fun Application.setupMiddleware() {
@@ -86,7 +116,12 @@ fun Application.setupMiddleware() {
     install(CallLogging)
 }
 
-fun Application.setupRoutes(sseFlow: SharedFlow<SseEvent>, zmq: ZmqRouter, db: AppDatabase) {
+fun Application.setupRoutes(
+    sseFlow: SharedFlow<SseEvent>,
+    zmq: ZmqRouter,
+    db: AppDatabase,
+    registry: PrometheusMeterRegistry
+) {
     install(Routing) {
         singlePageApplication {
             useResources = true
@@ -96,6 +131,9 @@ fun Application.setupRoutes(sseFlow: SharedFlow<SseEvent>, zmq: ZmqRouter, db: A
         staticResources("/web", "web")
         staticResources("/images", "images")
         staticResources("/style", "style")
+
+        get("/metrics") { call.respond(registry.scrape()) }
+
         get("/analysis") { handleListAnalysis(call, db) }
         get("/analysis/{id}") { handleAnalysisById(call, db) }
         get("/analysis/{category}/{startDate}/{endDate}") { handleRequestAnalysis(call, zmq, db) }

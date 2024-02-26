@@ -30,14 +30,18 @@ apply plugin: 'application'
 mainClassName = "edu.colorado.AppKt"
 
 dependencies {
-    testImplementation "io.ktor:ktor-server-test-host:$ktor_version"
-    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    implementation "io.ktor:ktor-server-metrics-micrometer:$ktor_version"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.3"
+
     implementation project(":components:data-analyzer")
     implementation project(":components:data-collector")
     implementation project(":components:workflow-support")
     implementation project(":components:database")
     implementation project(":components:zmq-router")
     implementation project(":components:fred-client")
+
+    testImplementation "io.ktor:ktor-server-test-host:$ktor_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
 }
 
 tasks.withType(Copy).all {
