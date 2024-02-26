@@ -33,3 +33,4 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars "FRED_API_KEY=${{ secrets.FRED_API_KEY }}"
+            --set-env-vars "PORT=8080"
