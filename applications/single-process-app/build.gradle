@@ -1,5 +1,22 @@
 plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
+    id 'com.github.node-gradle.node' version '7.0.2'
+}
+
+node {
+    version = '20.10.0'  // Mirrors my local machine.
+    npmVersion = '10.2.5' // Also mirrors local machine.
+    download = true
+
+    workDir = file("${project.projectDir}/../../web/.gradle/nodejs")
+
+    // The directory where npm is installed (when a specific version is defined)
+    npmWorkDir = file("${project.projectDir}/../../web/.gradle/npm")
+
+    // The Node.js project directory location
+    // This is where the package.json file and node_modules directory are located
+    // By default it is at the root of the current project
+    nodeProjectDir = file("${project.projectDir}/../../web")
 }
 
 version '1.0-SNAPSHOT'
@@ -34,3 +51,21 @@ jar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
+
+
+task npmTest(type: NpmTask) {
+    args = ['run', 'test']
+}
+
+task npmBuild(type: NpmTask) {
+    dependsOn npmTest
+    args = ['run', 'build']
+}
+
+task copyWeb(type: Copy) {
+    dependsOn npmBuild
+    from "${project.projectDir}/web/dist"
+    into "${project.projectDir}/src/main/resources/web"
+}
+
+build { dependsOn copyWeb } // Critical for auto-build w/ Vite.
