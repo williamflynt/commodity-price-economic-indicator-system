@@ -2,7 +2,22 @@
 
 A discussion on the system I implemented to meet the A-Level Requirements!
 
-## Motivation and Architecture
+#### Contents
+
+1. [Motivation](#motivation)
+    * [Problem](#problem)
+2. [Architecture](#architecture)
+3. [Sequence Diagram](#sequence-diagram)
+4. [Requirements and Refinement](#requirements-and-refinement)
+    * [General Requirements](#general-requirements)
+5. [Design Decision Highlights](#design-decision-highlights)
+    * [Building the App + Web UI](#building-the-app--web-ui)
+    * [Handlers](#handlers)
+6. [System Requirements and Testability](#system-requirements-and-testability)
+
+---
+
+## Motivation
 
 Motivation for this specific application answers these questions:
 
@@ -75,7 +90,7 @@ There are functional requirements for the specific application:
 3. The system should conduct analysis on demand, if data is available, or immediately after collection.
 4. The system must push information to the user interface.
 
-## Design Decisions
+## Design Decision Highlights
 
 I made the decision to use a relational database over a NoSQL database because of the structured nature of the data being collected and analyzed.
 Relational databases are well-suited for handling structured data and provide robust querying capabilities, which are essential for the data analysis component of my system.
@@ -89,6 +104,13 @@ It's because of the requirement to deploy this thing quickly and easily for demo
 Deployment uses Cloud Run, which is perfect for single-container systems.
 Rather than run many services in a single container, it made sense to use a fast-to-build, fast-to-deploy, reliable bus that stays local.
 I was able to avoid more complex networking considerations in this model.
+
+### Building the App + Web UI
+
+I like Gradle for builds, because it makes tasks easy to add.
+
+You can see in my [`build.gradle`](../applications/single-process-app/build.gradle) that I'm also building the web UI, which I serve via my the main HTTP server.
+For low traffic apps, this is much simpler than setting up a CDN, etc...
 
 ### Handlers
 
